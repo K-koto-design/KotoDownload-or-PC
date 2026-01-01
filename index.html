@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Котобанк | Терминал</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --accent: #ff0000;
+            --bg: #050505;
+            --card: #0f0f0f;
+            --grad: linear-gradient(135deg, #000000 0%, #1a0000 100%);
+        }
+
+        body, html { 
+            margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; 
+            background: var(--bg); color: white; height: 100%; overflow: hidden;
+        }
+
+        /* Экран блокировки (для браузера) */
+        #lock-screen {
+            display: flex; position: fixed; inset: 0; background: var(--grad);
+            z-index: 1000; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
+        }
+
+        /* Контент (для установленного приложения) */
+        #app-content {
+            display: none; height: 100vh; background: var(--grad);
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        /* Если открыто как приложение — меняем видимость */
+        @media (display-mode: standalone) {
+            #lock-screen { display: none !important; }
+            #app-content { display: flex !important; }
+        }
+
+        .logo { font-size: 80px; filter: drop-shadow(0 0 20px var(--accent)); margin-bottom: 20px; }
+        .btn {
+            background: var(--accent); color: white; border: none; padding: 20px 50px;
+            font-size: 18px; font-weight: 900; cursor: pointer; text-decoration: none;
+            text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+        }
+        .btn:hover { background: #fff; color: #000; box-shadow: 0 0 30px var(--accent); }
+
+        .install-hint {
+            margin-top: 30px; padding: 20px; border: 1px dashed #444; color: #888; max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="lock-screen">
+        <div class="logo">🐱</div>
+        <h1 style="color: var(--accent); text-transform: uppercase;">Доступ ограничен</h1>
+        <p>Для безопасности протокол скачивания доступен только через <br><b>установленное приложение Котобанк</b>.</p>
+        
+        <div class="install-hint">
+            <b>КАК ПОЛУЧИТЬ ДОСТУП:</b><br>
+            Нажмите на иконку 🖥️ (установить) в правой части адресной строки вашего браузера и запустите приложение с рабочего стола.
+        </div>
+    </div>
+
+    <div id="app-content">
+        <div class="logo">🐱</div>
+        <h1 style="font-style: italic; text-transform: uppercase;">Терминал активен</h1>
+        <p style="color: #666; margin-bottom: 40px;">Авторизация пройдена. Доступ к зашифрованным файлам открыт.</p>
+        
+        <div style="background: #0f0f0f; padding: 50px; border: 1px solid #300; text-align: center;">
+            <a href="files/kotobank.ipa" download class="btn">Скачать .IPA файл</a>
+            <p style="font-size: 12px; color: var(--accent); margin-top: 20px;">ВНИМАНИЕ: ТОЛЬКО ДЛЯ ВАШЕГО ID</p>
+        </div>
+    </div>
+
+    <script>
+        // Регистрация сервис-воркера (нужна для работы кнопки установки)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
