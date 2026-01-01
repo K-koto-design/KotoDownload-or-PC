@@ -8,10 +8,11 @@
     <style>
         :root {
             --accent: #ff0000;
+            --accent-dim: #4a0000;
             --bg-dark: #050505;
             --sidebar: #0a0a0a;
             --card-bg: rgba(20, 20, 20, 0.8);
-            --border: 1px solid #300;
+            --border: 1px solid #330000;
         }
 
         body, html {
@@ -20,10 +21,58 @@
             background: var(--bg-dark); color: white; overflow: hidden;
         }
 
-        /* 1. ЭКРАН БЛОКИРОВКИ В БРАУЗЕРЕ */
+        /* --- 1. НОВЫЙ ЭКРАН БЛОКИРОВКИ (КРАСИВЫЙ) --- */
         #browser-lock {
-            display: flex; position: fixed; inset: 0; background: radial-gradient(circle, #200 0%, #000 100%);
+            display: flex; position: fixed; inset: 0; 
+            background-color: #020202;
+            /* Эффект старого монитора (Scanlines) */
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 6px 100%;
             z-index: 10000; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            padding: 20px;
+        }
+
+        .lock-icon {
+            font-size: 80px; margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px var(--accent));
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .lock-title {
+            font-size: 36px; font-weight: 900; text-transform: uppercase; 
+            letter-spacing: 4px; color: #fff; margin: 0;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .lock-subtitle {
+            color: #888; font-family: monospace; font-size: 14px; 
+            margin-top: 10px; margin-bottom: 40px; letter-spacing: 1px;
+        }
+
+        .install-card {
+            background: rgba(20, 0, 0, 0.4);
+            border: 1px solid var(--accent);
+            padding: 30px; max-width: 450px; width: 100%;
+            border-radius: 4px; position: relative;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.15);
+        }
+
+        /* Декоративные уголки */
+        .install-card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 20px; height: 20px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+        .install-card::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 20px; height: 20px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+
+        .install-step {
+            display: flex; align-items: center; gap: 15px; margin-bottom: 15px; text-align: left;
+        }
+        .icon-box {
+            width: 40px; height: 40px; background: #200; border: 1px solid #500;
+            display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 20px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         /* 2. ЭКРАН ЗАГРУЗКИ ПРИЛОЖЕНИЯ */
@@ -105,10 +154,27 @@
 <body>
 
     <div id="browser-lock">
-        <h1 style="color: var(--accent); font-size: 50px; margin: 0;">ТЕРМИНАЛ ЗАБЛОКИРОВАН</h1>
-        <p style="color: #666;">ДОСТУП ТОЛЬКО ЧЕРЕЗ ПРИЛОЖЕНИЕ</p>
-        <div style="margin-top: 30px; border: 1px dashed #444; padding: 20px;">
-            Установите Kotobank (иконка 🖥️ в адресной строке)
+        <div class="lock-icon">🔒</div>
+        <h1 class="lock-title">SYSTEM LOCKED</h1>
+        <p class="lock-subtitle">WEB ENVIRONMENT DETECTED // ACCESS DENIED</p>
+        
+        <div class="install-card">
+            <div style="text-align: left; margin-bottom: 20px; font-size: 12px; color: #888; text-transform: uppercase;">
+                Для разблокировки терминала:
+            </div>
+            
+            <div class="install-step">
+                <div class="icon-box">↗️</div>
+                <div>Найдите в адресной строке иконку <b>монитора</b> или <b>три точки</b></div>
+            </div>
+            <div class="install-step">
+                <div class="icon-box">🖥️</div>
+                <div>Выберите пункт <b>"Установить приложение Котобанк"</b></div>
+            </div>
+            <div class="install-step">
+                <div class="icon-box">✅</div>
+                <div>Запустите терминал с <b>рабочего стола</b></div>
+            </div>
         </div>
     </div>
 
@@ -163,9 +229,9 @@
     </div>
 
     <script>
-        // --- ВСТАВЬ СВОЮ ССЫЛКУ НИЖЕ ---
+        // --- ТВОЯ ССЫЛКА ---
         const FILE_URL = "https://drive.google.com/uc?export=download&id=1TGYr3Uks2h2LkxZG0PnX1WhtJDSJkvvJ"; 
-        // ------------------------------
+        // -------------------
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 
@@ -195,7 +261,6 @@
                     p = 100;
                     clearInterval(interval);
                     
-                    // Сама закачка
                     const a = document.createElement('a');
                     a.href = FILE_URL;
                     a.download = 'kotobank.ipa';
