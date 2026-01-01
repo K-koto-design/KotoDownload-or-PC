@@ -3,80 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Котобанк | Терминал</title>
+    <title>KOTOBANK | Desktop Terminal</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root {
             --accent: #ff0000;
-            --bg: #050505;
-            --card: #0f0f0f;
-            --grad: linear-gradient(135deg, #000000 0%, #1a0000 100%);
+            --bg-dark: #050505;
+            --sidebar: #0a0a0a;
+            --card-bg: rgba(20, 20, 20, 0.8);
+            --border: 1px solid #300;
         }
 
-        body, html { 
-            margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg); color: white; height: 100%; overflow: hidden;
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark); color: white; overflow: hidden;
         }
 
-        /* Экран блокировки (для браузера) */
-        #lock-screen {
-            display: flex; position: fixed; inset: 0; background: var(--grad);
-            z-index: 1000; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
+        /* 1. ЭКРАН БЛОКИРОВКИ В БРАУЗЕРЕ */
+        #browser-lock {
+            display: flex; position: fixed; inset: 0; background: radial-gradient(circle, #200 0%, #000 100%);
+            z-index: 10000; flex-direction: column; align-items: center; justify-content: center; text-align: center;
         }
 
-        /* Контент (для установленного приложения) */
-        #app-content {
-            display: none; height: 100vh; background: var(--grad);
-            flex-direction: column; align-items: center; justify-content: center;
+        /* 2. ЭКРАН ЗАГРУЗКИ ПРИЛОЖЕНИЯ */
+        #boot-loader {
+            display: none; position: fixed; inset: 0; background: #000;
+            z-index: 9000; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        /* Если открыто как приложение — меняем видимость */
+        /* 3. ГЛАВНЫЙ ИНТЕРФЕЙС */
+        #main-app {
+            display: none; height: 100vh; display: flex;
+            background: linear-gradient(135deg, #050505 0%, #1a0000 100%);
+        }
+
         @media (display-mode: standalone) {
-            #lock-screen { display: none !important; }
-            #app-content { display: flex !important; }
+            #browser-lock { display: none !important; }
+            #boot-loader { display: flex; }
         }
 
-        .logo { font-size: 80px; filter: drop-shadow(0 0 20px var(--accent)); margin-bottom: 20px; }
-        .btn {
-            background: var(--accent); color: white; border: none; padding: 20px 50px;
-            font-size: 18px; font-weight: 900; cursor: pointer; text-decoration: none;
-            text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+        .sidebar {
+            width: 260px; background: var(--sidebar); border-right: var(--border);
+            display: flex; flex-direction: column; padding: 20px 0;
         }
-        .btn:hover { background: #fff; color: #000; box-shadow: 0 0 30px var(--accent); }
 
-        .install-hint {
-            margin-top: 30px; padding: 20px; border: 1px dashed #444; color: #888; max-width: 400px;
+        .side-logo { padding: 0 25px 30px; font-weight: 900; color: var(--accent); font-size: 20px; letter-spacing: 2px; }
+
+        .nav-item {
+            padding: 15px 25px; color: #666; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; gap: 15px; font-size: 14px;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(255,0,0,0.15) 0%, transparent 100%);
+            color: var(--accent); border-left: 4px solid var(--accent);
+        }
+
+        .viewport { flex: 1; padding: 40px; display: flex; flex-direction: column; gap: 30px; overflow-y: auto; }
+
+        .hero-section {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--card-bg); border: var(--border); padding: 40px; border-radius: 20px;
+        }
+
+        .status-box h2 { font-size: 42px; margin: 0; text-transform: uppercase; }
+        .status-box p { color: var(--accent); font-weight: bold; letter-spacing: 2px; margin-top: 10px; }
+
+        .big-icon-check {
+            width: 120px; height: 120px; border-radius: 50%; border: 8px solid var(--accent);
+            display: flex; align-items: center; justify-content: center; font-size: 60px;
+            box-shadow: 0 0 40px rgba(255,0,0,0.3);
+        }
+
+        .grid-title { font-size: 12px; color: #444; text-transform: uppercase; letter-spacing: 2px; }
+        .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        .app-card {
+            background: var(--card-bg); border: var(--border); padding: 20px;
+            border-radius: 15px; display: flex; align-items: center; gap: 20px;
+            transition: 0.3s; cursor: pointer;
+        }
+
+        .app-card:hover { border-color: var(--accent); transform: scale(1.02); }
+        .app-icon { width: 50px; height: 50px; background: #222; border-radius: 12px; font-size: 25px; display: flex; align-items: center; justify-content: center; }
+
+        .overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            z-index: 10000; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .loader-bar { width: 300px; height: 2px; background: #200; margin-top: 20px; }
+        .loader-fill { width: 0%; height: 100%; background: var(--accent); box-shadow: 0 0 15px var(--accent); }
+
+        .modal {
+            display: none; position: fixed; inset: 0; background: #000;
+            z-index: 11000; padding: 40px; text-align: left; justify-content: center; flex-direction: column; align-items: center;
         }
     </style>
 </head>
 <body>
 
-    <div id="lock-screen">
-        <div class="logo">🐱</div>
-        <h1 style="color: var(--accent); text-transform: uppercase;">Доступ ограничен</h1>
-        <p>Для безопасности протокол скачивания доступен только через <br><b>установленное приложение Котобанк</b>.</p>
-        
-        <div class="install-hint">
-            <b>КАК ПОЛУЧИТЬ ДОСТУП:</b><br>
-            Нажмите на иконку 🖥️ (установить) в правой части адресной строки вашего браузера и запустите приложение с рабочего стола.
+    <div id="browser-lock">
+        <h1 style="color: var(--accent); font-size: 50px; margin: 0;">ТЕРМИНАЛ ЗАБЛОКИРОВАН</h1>
+        <p style="color: #666;">ДОСТУП ТОЛЬКО ЧЕРЕЗ ПРИЛОЖЕНИЕ</p>
+        <div style="margin-top: 30px; border: 1px dashed #444; padding: 20px;">
+            Установите Kotobank (иконка 🖥️ в адресной строке)
         </div>
     </div>
 
-    <div id="app-content">
-        <div class="logo">🐱</div>
-        <h1 style="font-style: italic; text-transform: uppercase;">Терминал активен</h1>
-        <p style="color: #666; margin-bottom: 40px;">Авторизация пройдена. Доступ к зашифрованным файлам открыт.</p>
-        
-        <div style="background: #0f0f0f; padding: 50px; border: 1px solid #300; text-align: center;">
-            <a href="files/kotobank.ipa" download class="btn">Скачать .IPA файл</a>
-            <p style="font-size: 12px; color: var(--accent); margin-top: 20px;">ВНИМАНИЕ: ТОЛЬКО ДЛЯ ВАШЕГО ID</p>
+    <div id="boot-loader">
+        <div id="logs" style="font-family: monospace; color: var(--accent); font-size: 12px;"></div>
+    </div>
+
+    <div id="main-app">
+        <div class="sidebar">
+            <div class="side-logo">KOTOBANK</div>
+            <div class="nav-item active">🏠 Установщик</div>
+            <div class="nav-item">📚 Библиотека</div>
+            <div class="nav-item">⚙️ Настройки</div>
         </div>
+
+        <div class="viewport">
+            <div class="hero-section">
+                <div class="status-box">
+                    <p>ВЕРСИЯ 2.0.1</p>
+                    <h2>Вернуть Онлайн на Айфон</h2>
+                    <div style="margin-top: 25px; color: #0f0; font-size: 12px;">● СИСТЕМА ГОТОВА К ЗАГРУЗКЕ</div>
+                </div>
+                <div class="big-icon-check">🐱</div>
+            </div>
+
+            <div class="grid-title">Доступные компоненты</div>
+            <div class="app-grid">
+                <div class="app-card" onclick="prepare('Kotobank Mobile')">
+                    <div class="app-icon">К</div>
+                    <div style="flex:1"><b>К-Онлайн</b><br><small style="color:#444">Основной клиент</small></div>
+                    <div style="color:var(--accent)">⬇️</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="prep-overlay" class="overlay">
+        <div id="prep-text" style="letter-spacing: 3px; font-weight: bold;">ШИФРОВАНИЕ КАНАЛА...</div>
+        <div class="loader-bar"><div id="bar" class="loader-fill"></div></div>
+        <div id="perc" style="margin-top: 15px; color: var(--accent);">0%</div>
+    </div>
+
+    <div id="modal-guide" class="modal">
+        <h1 style="color: var(--accent);">ФАЙЛ ЗАГРУЖЕН</h1>
+        <div style="margin: 40px 0; border-left: 3px solid var(--accent); padding-left: 20px;">
+            <p>1. Откройте <b>Sideloadly</b></p>
+            <p>2. Подключите iPhone кабелем</p>
+            <p>3. Выберите скачанный <b>.ipa</b></p>
+            <p>4. Нажмите <b>START</b></p>
+        </div>
+        <button onclick="location.reload()" style="background: var(--accent); color: white; border: none; padding: 15px 40px; font-weight: bold; cursor: pointer;">ВЕРНУТЬСЯ</button>
     </div>
 
     <script>
-        // Регистрация сервис-воркера (нужна для работы кнопки установки)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+        // --- ВСТАВЬ СВОЮ ССЫЛКУ НИЖЕ ---
+        const FILE_URL = "files/kotobank.ipa"; 
+        // ------------------------------
+
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            document.getElementById('main-app').style.display = 'none';
+            const logBox = document.getElementById('logs');
+            const logData = ["> Запуск...", "> Проверка ядра...", "> Канал защищен...", "> Готово."];
+            logData.forEach((t, i) => {
+                setTimeout(() => {
+                    logBox.innerHTML += `<div>${t}</div>`;
+                    if(i === logData.length -1) {
+                        setTimeout(() => {
+                            document.getElementById('boot-loader').style.display = 'none';
+                            document.getElementById('main-app').style.display = 'flex';
+                        }, 800);
+                    }
+                }, i * 400);
+            });
+        }
+
+        function prepare(appName) {
+            document.getElementById('prep-overlay').style.display = 'flex';
+            let p = 0;
+            let interval = setInterval(() => {
+                p += Math.random() * 8;
+                if(p >= 100) {
+                    p = 100;
+                    clearInterval(interval);
+                    
+                    // Сама закачка
+                    const a = document.createElement('a');
+                    a.href = FILE_URL;
+                    a.download = 'kotobank.ipa';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    setTimeout(() => {
+                        document.getElementById('prep-overlay').style.display = 'none';
+                        document.getElementById('modal-guide').style.display = 'flex';
+                    }, 1000);
+                }
+                document.getElementById('bar').style.width = p + "%";
+                document.getElementById('perc').innerText = Math.floor(p) + "%";
+            }, 50);
         }
     </script>
 </body>
